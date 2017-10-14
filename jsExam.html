@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            position: relative;
+        }
+
+        form {
+            width: 800px;
+            /*height: 800px;*/
+            margin: 10px;
+        }
+
+        #big {
+            margin-left: 10px;
+        }
+
+        a {
+            display: inline-block;
+            margin: 0 0 0 20px;
+            color: #666;
+        }
+
+        ul {
+            margin-left: 20px;
+        }
+
+        .update {
+            width: 100%;
+            height: 100%;
+            background-color: rgba(125, 125, 125, 1);
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 999;
+            display: none;
+        }
+
+        i {
+            font-style: initial;
+        }
+    </style>
+</head>
+
+<body>
+    <div class='update'>
+        菜名：<input type="text"> 价格：
+        <input type="text">
+        <button id='btn'>修改</button>
+    </div>
+    <form>
+        <label>选择菜型</label>
+        <select name="" id="type">
+            <option value="1">大菜</option>
+            <option value="2">中菜</option>
+            <option value="3">小菜</option>
+        </select>
+        <label>菜名</label>
+        <input type="text" id='name'>
+        <label>价格</label>
+        <input type="text" id='price'>
+        <button id='addbtn'>添加</button>
+    </form>
+    <select id='big' value=''></select>
+    <ul id='small'>
+        <li></li>
+    </ul>
+
+</body>
+<script src='./lib/jquery-1.12.2.js'></script>
+<script type="text/javascript">
+    var menu = [
+        {
+            "type_id": 1, "name": "大菜", "food": [
+                { "food_id": 1, "name": "鱼香肉丝", "price": "10" },
+                { "food_id": 2, "name": "红烧肉", "price": "11" },
+                { "food_id": 3, "name": "香辣粉", "price": "12" }
+            ]
+        },
+        {
+            "type_id": 2, "name": "中菜", "food": [
+                { "food_id": 4, "name": "小炒肉", "price": "13" },
+                { "food_id": 5, "name": "云吞", "price": "14" }
+            ]
+        },
+        {
+            "type_id": 3, "name": "小菜", "food": [
+                { "food_id": 6, "name": "雪糕", "price": "15" },
+                { "food_id": 7, "name": "黄瓜", "price": "16" }
+            ]
+        }
+    ];
+    /*
+        step 1: 根据menu的数据，动态生成一个二级联运菜单
+        step 2: 实现动态增加、修改、删除菜单dom节点，同时保持dom结构与json保持同步
+        step 3: 实现通过拖拽修改菜单结构（可使用jQuery插件），同时保持dom结构与json保持同步
+    */
+    // 主菜单的渲染列表
+    function getList() {
+        var html = '';
+        for (var i = 0; i < menu.length; i++) {
+            html += '<option value="' + menu[i].name + '" id=' + menu[i].type_id + '>' + menu[i].name + '</option>';
+        }
+        $('#big').html(html);
+    }
+    // 第二个菜单的列表渲染
+    function getSmall(list) {
+        var html = '';
+        for (var i = 0; i < list.length; i++) {
+            html += '<li id=' + list[i].food_id + '><i>' + list[i].name + '---' + list[i].price + '</i>元   <a href="#" class="edit">修改</a> <a href="#" class="del">删除</a></li>';
+        }
+        $('#small').html(html);
+    }
+    // 添加的函数
+    function add(i) {
+        var fid = menu[i].food[menu[i].food.length - 1].food_id + 1;
+        var obj = { name: $('#name').val(), price: $('#price').val(), food_id: fid };
+        menu[i].food.push(obj);
+        getSmall(menu[i].food);
+        $('#big option').eq(i).prop('selected', true).siblings().prop('selected', false);
+        alert('添加成功');
+        $('#name').val('');
+        $('#price').val('');
+
+    }
+    getList();
+    // 改变主菜单，二级菜单跟着改变
+    $('#big').on('change', function () {
+        if ($('#big').val() == '大菜') {
+            getSmall(menu[0].food);
+        } else if ($('#big').val() == '中菜') {
+            getSmall(menu[1].food);
+        } else {
+            getSmall(menu[2].food);
+        }
+
+    })
+    $('#small').html(getSmall(menu[0].food));
+    // 添加功能
+    $('#addbtn').on('click', function () {
+        // console.log($('#name').val() == false)
+        if (!$('#name').val() || !$('#price').val()) {
+            alert('请输入菜名或者价格');
+            return false;
+        }
+        var id = $('#type').val();
+        if (id == 1) {
+            add(0);
+
+        } else if (id == 2) {
+            add(1);
+        } else {
+            add(2);
+        }
+        return false;
+    })
+    // 删除功能
+    $('#small').on('click', '.del', function () {
+        var id = $(this).parent().attr('id');
+        for (var i = 0; i < menu.length; i++) {
+            for (var j = 0; j < menu[i].food.length; j++) {
+                if (id == menu[i].food[j].food_id) {
+                    menu[i].food.splice(j, 1);
+                    getSmall(menu[i].food);
+                    alert('删除成功');
+                    return;
+                }
+            }
+        }
+        return false;
+    })
+    // 修改功能
+    var uid = '';
+    $('#small').on('click', '.edit', function () {
+        $('.update').show();
+        uid = $(this).parent().attr('id');
+        var val = $(this).siblings('i').text().split('---');
+        $('.update input').eq(0).val(val[0]);
+        $('.update input').eq(1).val(val[1]);
+        // 实现修改的功能
+        $('#btn').on('click', function () {
+            for (var i = 0; i < menu.length; i++) {
+                for (var j = 0; j < menu[i].food.length; j++) {
+                    if ((uid - 0) === menu[i].food[j].food_id) {
+                        console.log(uid);
+                        menu[i].food[j].name = $('.update input').eq(0).val();
+                        menu[i].food[j].price = $('.update input').eq(1).val();
+                        menu[i].food[j].food_id = menu[i].food[j].food_id;
+                        alert('修改成功');
+                        $('.update').hide();
+                        getSmall(menu[i].food);
+                        // uid = '';
+                        return;
+                    }
+                }
+            }
+        })
+        return false;
+    })
+
+</script>
+
+</html>
